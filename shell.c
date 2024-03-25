@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/wait.h>
 
 #define MAX_HISTORY_SIZE 10
 #define MAX_COMMAND_LENGTH 50
@@ -10,20 +11,17 @@
 void imprimir(char[]);
 void my_exit(int code);
 void show_history(char history[][MAX_COMMAND_LENGTH], int history_count);
+void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *history_count);
 
 int main() {
     time_t mytime;
     mytime = time(NULL);
     struct tm tm = *localtime(&mytime);
     const char s[2] = " ";
-    int contador_args = 0; 
     char entrada[MAX_COMMAND_LENGTH];
-    char *aux[MAX_COMMAND_LENGTH];
 
     char history[MAX_HISTORY_SIZE][MAX_COMMAND_LENGTH] = {0}; // Histórico de comandos
     int history_count = 0; // Contador de comandos no histórico
-
-
 
     printf("SEJA BEM VINDO AO TERMINAL PERSONALIZADO!\n");
     printf("PARA SAIR DIGITE APENAS 'exit' NO TERMINAL!\n\n\n");
@@ -33,7 +31,7 @@ int main() {
         fgets(entrada, MAX_COMMAND_LENGTH, stdin);
 
         // Removendo o caractere de nova linha da entrada
-         entrada[strcspn(entrada, "\n")] = 0;
+        entrada[strcspn(entrada, "\n")] = 0;
 
         if (strcmp(entrada, "exit") == 0) {
             my_exit(2);
@@ -41,42 +39,56 @@ int main() {
             // Chama histórico de comandos
             show_history(history, history_count);
         } else {
-            // Se não for hisotry vai apenas salvar os comandos no array
-            if (history_count < MAX_HISTORY_SIZE) {
-                strcpy(history[history_count], entrada);
-                history_count++;
-            } else {
-                // Se for colocado mais de 10 comandos, exclui os antigos e adiciona os mais novos, deslocamento de array 
-                for (int i = 0; i < MAX_HISTORY_SIZE - 1; i++) {
-                    strcpy(history[i], history[i + 1]);
-                }
-                strcpy(history[MAX_HISTORY_SIZE - 1], entrada);
-            }
+            // Executa comando e atualiza histórico
+            execute_command(entrada, history, &history_count);
         }
-
-
-        char *token;
-		token = strtok(entrada, s);
-		aux[contador_args] = token;
-		contador_args++;
-		while (token != NULL){
-			token = strtok(NULL, s);
-			aux[contador_args] = token;
-			contador_args++;
-		}
-
-		aux[(contador_args+1)] = NULL;
-		char* args[contador_args];
-
-		for(int i = 0; i < contador_args; i++){
-			args[i] = aux[i];
-		}
-
-		execvp(args[0], args);
-
     }
 
     return 0;
+}
+
+void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *history_count) {
+    char *token;
+    const char s[2] = " ";
+    char *args[MAX_COMMAND_LENGTH];
+    int contador_args = 0;
+
+    token = strtok(entrada, s);
+    args[contador_args] = token;
+    contador_args++;
+    while (token != NULL){
+        token = strtok(NULL, s);
+        args[contador_args] = token;
+        contador_args++;
+    }
+
+    args[contador_args] = NULL;
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        // processo filho que executa o comando
+        execvp(args[0], args);
+        // se nao exisitir o comando erro
+        printf("Comando não encontrado: %s\n", entrada);
+        // e entao sai do processo filho
+        exit(1);
+    } else if (pid > 0) {
+        // Processo pai espera pelo término do processo filho
+        wait(NULL);
+        // att o histórico de comandos
+        if (*history_count < MAX_HISTORY_SIZE) {
+            strcpy(history[*history_count], entrada);
+            (*history_count)++;
+        } else {
+            for (int i = 0; i < MAX_HISTORY_SIZE - 1; i++) {
+                strcpy(history[i], history[i + 1]);
+            }
+            strcpy(history[MAX_HISTORY_SIZE - 1], entrada);
+        }
+    } else {
+        // erro ao criar processo filho
+        printf("Erro ao criar processo filho.\n");
+    }
 }
 
 void imprimir(char l[]) {
@@ -93,7 +105,6 @@ void my_exit(int code) {
 }
 
 void show_history(char history[][MAX_COMMAND_LENGTH], int history_count) {
-   
     printf("Histórico dos últimos %d comandos:\n", history_count);
     for (int i = 0; i < history_count; i++) {
         printf("%d: %s\n", i + 1, history[i]);
