@@ -30,7 +30,8 @@ int main() {
     printf("PARA SAIR DIGITE APENAS 'exit' NO TERMINAL!\n\n\n");
 
     while (1) {
-         mytime = time(NULL);
+        //Captam o tempo
+        mytime = time(NULL);
         struct tm tm = *localtime(&mytime);
 
         printf("%s@%s[%02d:%02d:%02d] $ ", getenv("USER"),getHost(),tm.tm_hour, tm.tm_min, tm.tm_sec);   
@@ -74,6 +75,8 @@ void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *his
     } 
 
     args[contador_args] = NULL;
+
+    
 
     pid_t pid = fork();
     if (pid == 0) {
