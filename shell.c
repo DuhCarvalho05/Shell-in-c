@@ -1,4 +1,6 @@
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
@@ -12,6 +14,7 @@ void imprimir(char[]);
 void my_exit(int code);
 void show_history(char history[][MAX_COMMAND_LENGTH], int history_count);
 void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *history_count);
+char* getHost();
 
 int main() {
     time_t mytime;
@@ -27,7 +30,10 @@ int main() {
     printf("PARA SAIR DIGITE APENAS 'exit' NO TERMINAL!\n\n\n");
 
     while (1) {
-        printf("user@host[%02d:%02d:%02d] $ ", tm.tm_hour, tm.tm_min, tm.tm_sec);   
+         mytime = time(NULL);
+        struct tm tm = *localtime(&mytime);
+
+        printf("%s@%s[%02d:%02d:%02d] $ ", getenv("USER"),getHost(),tm.tm_hour, tm.tm_min, tm.tm_sec);   
         fgets(entrada, MAX_COMMAND_LENGTH, stdin);
 
         // Removendo o caractere de nova linha da entrada
@@ -45,6 +51,11 @@ int main() {
     }
 
     return 0;
+}
+char* getHost(){
+    char*  h = malloc(sizeof(char) * 50);
+    gethostname(h, 50);
+    return h;
 }
 
 void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *history_count) {
