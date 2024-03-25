@@ -60,7 +60,7 @@ void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *his
         token = strtok(NULL, s);
         args[contador_args] = token;
         contador_args++;
-    }
+    } 
 
     args[contador_args] = NULL;
 
