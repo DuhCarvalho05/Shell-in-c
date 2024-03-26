@@ -38,6 +38,9 @@ int main() {
         printf("%s@%s[%02d:%02d:%02d]:%s $  ", getenv("USER"),getHost(),tm.tm_hour, tm.tm_min, tm.tm_sec, getpath());   
         fgets(entrada, MAX_COMMAND_LENGTH, stdin);
 
+        // Removendo o caractere de nova linha da entrada
+        entrada[strcspn(entrada, "\n")] = 0;
+
         char *token;
         const char s[2] = " ";
         char *args[MAX_COMMAND_LENGTH];
@@ -55,8 +58,7 @@ int main() {
 
         args[contador_args] = NULL;
 
-        // Removendo o caractere de nova linha da entrada
-        entrada[strcspn(entrada, "\n")] = 0;
+        
 
         if (strcmp(entrada, "exit") == 0) {
             my_exit(2);
