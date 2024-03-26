@@ -100,13 +100,13 @@ void execute_command(char *args[], char history[][MAX_COMMAND_LENGTH], int *hist
         wait(NULL);
         // att o histórico de comandos
         if (*history_count < MAX_HISTORY_SIZE) {
-            strcpy(history[*history_count], args);
+            strcpy(history[*history_count], *args);
             (*history_count)++;
         } else {
             for (int i = 0; i < MAX_HISTORY_SIZE - 1; i++) {
                 strcpy(history[i], history[i + 1]);
             }
-            strcpy(history[MAX_HISTORY_SIZE - 1], args);
+            strcpy(history[MAX_HISTORY_SIZE - 1], *args);
         }
     } else {
         // erro ao criar processo filho
