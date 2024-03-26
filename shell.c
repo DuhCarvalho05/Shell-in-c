@@ -92,7 +92,7 @@ void execute_command(char *args[], char history[][MAX_COMMAND_LENGTH], int *hist
         // processo filho que executa o comando
         execvp(args[0], args);
         // se nao exisitir o comando erro
-        printf("Comando não encontrado: %s\n", *args);
+        perror(args[0]);
         // e entao sai do processo filho
         exit(1);
     } else if (pid > 0) {
@@ -110,7 +110,7 @@ void execute_command(char *args[], char history[][MAX_COMMAND_LENGTH], int *hist
         }
     } else {
         // erro ao criar processo filho
-        printf("Erro ao criar processo filho.\n");
+        perror("execvp");
     }
 }
 
