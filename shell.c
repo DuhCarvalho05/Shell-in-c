@@ -13,8 +13,9 @@
 void imprimir(char[]);
 void my_exit(int code);
 void show_history(char history[][MAX_COMMAND_LENGTH], int history_count);
-void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *history_count);
+void execute_command(char *entrada[], char history[][MAX_COMMAND_LENGTH], int *history_count);
 char* getHost();
+char* getpath();
 
 int main() {
     time_t mytime;
@@ -34,8 +35,25 @@ int main() {
         mytime = time(NULL);
         struct tm tm = *localtime(&mytime);
 
-        printf("%s@%s[%02d:%02d:%02d] $ ", getenv("USER"),getHost(),tm.tm_hour, tm.tm_min, tm.tm_sec);   
+        printf("%s@%s[%02d:%02d:%02d]:%s $  ", getenv("USER"),getHost(),tm.tm_hour, tm.tm_min, tm.tm_sec, getpath());   
         fgets(entrada, MAX_COMMAND_LENGTH, stdin);
+
+        char *token;
+        const char s[2] = " ";
+        char *args[MAX_COMMAND_LENGTH];
+        int contador_args = 0;
+
+        token = strtok(entrada, s);
+        args[contador_args] = token;
+        contador_args++;
+        while (token != NULL)
+        {
+            token = strtok(NULL, s);
+            args[contador_args] = token;
+            contador_args++;
+        }
+
+        args[contador_args] = NULL;
 
         // Removendo o caractere de nova linha da entrada
         entrada[strcspn(entrada, "\n")] = 0;
@@ -45,13 +63,20 @@ int main() {
         } else if (strcmp(entrada, "history") == 0) {
             // Chama histórico de comandos
             show_history(history, history_count);
-        } else {
+        } else if (strcmp(args[0], "cd") == 0){
+            // Chama o comando interno cd
+            chdir(args[1]);
+        } else{
             // Executa comando e atualiza histórico
-            execute_command(entrada, history, &history_count);
+            execute_command(args, history, &history_count);
         }
     }
 
     return 0;
+}
+char* getpath(){
+    char* c = malloc(sizeof(char) * 100);
+    return getcwd(c, 100);
 }
 char* getHost(){
     char*  h = malloc(sizeof(char) * 50);
@@ -59,23 +84,7 @@ char* getHost(){
     return h;
 }
 
-void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *history_count) {
-    char *token;
-    const char s[2] = " ";
-    char *args[MAX_COMMAND_LENGTH];
-    int contador_args = 0;
-
-    token = strtok(entrada, s);
-    args[contador_args] = token;
-    contador_args++;
-    while (token != NULL){
-        token = strtok(NULL, s);
-        args[contador_args] = token;
-        contador_args++;
-    } 
-
-    args[contador_args] = NULL;
-
+void execute_command(char *args[], char history[][MAX_COMMAND_LENGTH], int *history_count) {
     
 
     pid_t pid = fork();
@@ -83,7 +92,7 @@ void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *his
         // processo filho que executa o comando
         execvp(args[0], args);
         // se nao exisitir o comando erro
-        printf("Comando não encontrado: %s\n", entrada);
+        printf("Comando não encontrado: %s\n", *args);
         // e entao sai do processo filho
         exit(1);
     } else if (pid > 0) {
@@ -91,13 +100,13 @@ void execute_command(char *entrada, char history[][MAX_COMMAND_LENGTH], int *his
         wait(NULL);
         // att o histórico de comandos
         if (*history_count < MAX_HISTORY_SIZE) {
-            strcpy(history[*history_count], entrada);
+            strcpy(history[*history_count], args);
             (*history_count)++;
         } else {
             for (int i = 0; i < MAX_HISTORY_SIZE - 1; i++) {
                 strcpy(history[i], history[i + 1]);
             }
-            strcpy(history[MAX_HISTORY_SIZE - 1], entrada);
+            strcpy(history[MAX_HISTORY_SIZE - 1], args);
         }
     } else {
         // erro ao criar processo filho
